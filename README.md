@@ -157,7 +157,7 @@ docker build .
 
 - Create a docker repository on DockerHub (hub.docker.com)
 
-- Tag the Docker Image
+- Tag the Docker Image (Image ID is the text attached to sha256:{...})
 ```cmd
 docker tag <image_id> anuragb98/auth:latest
 ```
@@ -165,6 +165,42 @@ docker tag <image_id> anuragb98/auth:latest
 ```cmd
 docker push anuragb98/auth:latest
 ```
+- Pull the image
+```cmd
+docker pull anuragb98/auth:latest
+```
+`But, our Kubernetes configurations are going to be pulling these images.`
+
+---
+
+5. Create a directory called `manifests` which will include all our Kubernetes configurations.
+- Create a `auth-deploy.yaml` file. Here, we are actually pulling the Docker Image (which contains our source code) from the repository and deploying it to Kubernetes.
+- Create a `configmap.yaml` file which will contain environment variables for our container.
+- Create a `secret.yaml` to store DB passwords.
+- Create a `service.yaml`.
+
+- We wrote the code for our Auth Service and, we created a Dockerfile to create a Docker Image for that source code, and then we pushed that Docker Image to a DockerHub Repository.
+- Within the `manifests` dircetory, we wrote the infrastructure code for our Auth Deployment. So, all of the files in this directory, when applied will interface with k8s API to create our service and its corresponding resources.
+
+So, Run:
+```cmd
+kubectl apply -f .\manifests\
+```
+
+Run:
+```cmd
+minikube start
+k9s
+```
+
+- You should see 2 containers in a pod running.
+- You can access the containers using the shell. (Just press 's')
+```cmd
+env | grep MySQL
+```
+You should be able to see the configurations.
+
+## More on Kubernetes
 
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
