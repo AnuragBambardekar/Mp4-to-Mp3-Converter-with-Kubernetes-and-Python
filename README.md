@@ -433,5 +433,10 @@ docker pull anuragb98/gateway:latest
 
 8. Create the k8s `manifests` directory
 
+- Create all the same `.yaml` files, as were created for the auth service.
+- Also, create `ingress.yaml` file which is going to allow traffic to access our gateway endpoint.
+
+## What is an Ingress in context of k8s cluster?
+
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
