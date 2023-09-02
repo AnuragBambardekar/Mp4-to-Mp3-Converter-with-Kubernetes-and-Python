@@ -323,6 +323,7 @@ pika
 flask
 pyMongo - to wrap our Flask server to interface with MongoDB
 Flask-PyMongo
+requests
 ```
 
 ## What is GridFS in relation to MongoDB?
@@ -355,7 +356,82 @@ Flask-PyMongo
 ## Some Key Terms concerning Microservice Architecture
 
 1. Synchronous Interservice Communication
+- Client service sending the request awaits the response from the service, it is sending the request to.
+- Client service is essentially blocked. (Blocking Service Request)
+- In our case, the `API Gateway service` is *blocked* until the `Auth Service` returns the JWT or an error. 
+- Communication between the `API Gateway service` and the `Auth Service` is tightly coupled.
 
+2. Asynchronous Interservice Communication
+- Client service does not need to await the response from the downstream service. (Non-Blocking Request)
+- This is achieved in our case using a *queue*.
+- If the `API Gateway service` were to communicate with the `Video to Mp3 service` synchronously, then the performance of the system would've taken a hit, because if the Gateway were to get many requests to convert videos, the processes that make the request to the converter service would be blocked until the converter service finishes processing the videos.
+
+- If hypothetically, our gateway has 2 processes running with 4 threads each and we receive a 9th request then the gateway is essentially blocked from serving any more requests.
+
+![Alt text](images/image-12.png)
+
+- This is where our `queue` comes into the picture, hence decoupling our Gateway service and the Converter service.
+- Our gateway just stores the video on MongoDb and throws the message on the queue, for the downstream service to process the video at its convenience. Hence, allowing our gateway to handle more incoming threads.
+
+- A similar thing is happening between the converter service and the notifications service.
+
+3. Strong Consistency vs Eventual Consistency
+- If our application were `Strongly Consistent`:
+  Whenever our user uploads a video to the Gateway. The Gateway then makes a synchronous request to the Video to MP3 service, waiting for the conversion to complete and, in response the converter sends the ID for the MP3 to the user, once the conversion is complete. 
+- At that point if the user were to request for the converted file (MP3) with the ID. The user is guaranteed to get the most recent update of that data.
+
+<br>
+
+- If our application were `Eventually Consistent`:
+  When our gateway uploads the video to MongoDB and puts the message on the queue for it to be processed, we return a download ID (hypothetically) to the user.
+- If the user were to upload a video that took 1 minute to process, but immediately after receiving the ID, the user tried to download the MP3, the MP3 would not yet be available, as it would still be processing in that case.
+- But, the MP3 `eventually` will be available, in this casse if the user were to request for the MP3 after a minute.
+
+## How does RabbitMQ fit into our Architecture?
+
+- The producer sends the messages via an `Exchange`. Exchange is the middleman that allocates the messages to the correct queue.
+- We can configure multiple queues under one RabbitMQ instance.
+- In our case, we'll use a queue for videos and a queue for MP3's.
+
+![Alt text](images/image-13.png)
+
+- We are using the `default exchange` which is a direct exchange with no name pre-declared by the broker. So, every queue that is created is automatically bound to it with a routing key which is the same as the queue name.
+
+- Let's say that our producer is piling on more messages than our 1 consumer can process in a timely manner. 
+- So, there is a need to scale up!
+- Our queue needs to be able to accomodate multiple instances of our consumer (`Video to Mp3 service`) without bottle-necking the entire flow.
+- We manage that by using `Competing Consumers Pattern`.
+
+![Alt text](images/image-14.png)
+
+- So, the messages will be distributed evenly in a round-robin fashion, so they can be processed concurrently.
+
+---
+
+7. Gateway Service Deployment
+
+- Freeze our requirements
+```cmd
+\src\gateway> pip freeze > requirements.txt
+```
+- Create a `Dockerfile`
+```cmd
+docker build .
+```
+- Tag the Docker Image (Image ID is the text attached to sha256:{...})
+```cmd
+docker tag <image_id> anuragb98/gateway:latest
+```
+- Push the image to the remote repository
+```cmd
+docker push anuragb98/gateway:latest
+```
+- Pull the image
+```cmd
+docker pull anuragb98/gateway:latest
+```
+
+8. Create the k8s `manifests` directory
 
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
