@@ -202,5 +202,107 @@ You should be able to see the configurations.
 
 ## More on Kubernetes
 
+**What is Kubernetes ?** - In simple terms, k8s eliminates many of the manual processes involved in scaling and deploying containerized applications.
+
+- If we configure a service to have 4 pods, k8s will keep track of how many pods are up and running and if any of the pods go down for any reason, k8s will automatically scale the deployment so that the number of pods matches the configured amount.
+
+- So, there is no need to manually deploy individual pods when the pod crashes.
+
+![Alt text](image.png)
+
+- k8s also makes manually scaling pods more streamlined. For example, if we have a service that load balances requests to individual pods using round-robin and that service is experiencing more traffic than the available number of pods can handle. As a result of this, we can decide to scale our service up from 2 to 5 pods.
+
+- Without k8s, in a situation like this we would likely need to manually deploy each individual additional pod and then we would need to reconfigure the load balancer to include the new pods in the round-robin order.
+
+![Alt text](image-1.png)
+
+- k8s does all this for you! It is as simple as running this command:
+```cmd
+kubectl scale deployment --replicas=6 service
+```
+
+![Alt text](image-3.png)
+
+- k8s will scale up your service which includes maintaining the newly scaled number of pods, if the pod happens to crash. And, it will auto-configure the load balancer to include the new pods.
+
+- With k8s, we can cluster together a bunch of containerized services and easily orchestrate the deployment and management of the services in the cluster using `kubernetes objects` which are persistent entities in the k8s system.
+
+`A k8s object is a "record of intent" - once you create the object, the k8s system will constantly work to ensure the object exists. By creating an object, you're effectively telling the k8s system what you want your cluster's workload to look like; this is your cluster's desired state`
+
+- This sounds complicated, but we already did all these things.
+- The `auth-deploy.yaml` file is the "record of intent". In that we specified that we want 2 replicas to be deployed. The `status` describes the *current state* of the object, supplied and updated by the k8s system and its components. The k8s control plane continually and actively manages every object's actual state to match the desired state you supplied.
+
+`To work with k8s objects--create, modify or delete them--you'll need to use the k8s API. When you use the `kubectl` CLI, for example, the CLI makes the necessary k8s API calls for you.`
+
+- In our case, we are running our cluster locally using `minkube` so the end-point for the k8s API is on our local machine. But, in the real world your cluster will usually be dpeloyed on some server and on your local machine you'll have some k8s configuration for the cluster on that server which will enable your local `kubectl` CLI to interface with the remote server.
+
+![Alt text](image-4.png)
+
+**Required Fields in the .yaml files:**
+
+- *apiVersion* - which version of the k8s API you're using to create this objevt
+- *kind* - what kind of object you want to create
+- *metadata* - data that helps uniquely to identify the object
+- *spec* - what state you desire for the object
+
+**Use the k8s API Reference** to find the spec format for the objects you can create using k8s.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+  labels:
+    app: auth
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 3
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: anuragb98/auth:latest
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: auth-configmap
+            - secretRef:
+                name: auth-secret
+```
+
+**Explanation:**
+
+- https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/deployment-v1/
+
+- Within our template, for our replicas we are setting the labels with key `app` and value `auth`. So, the template is going to be the configuration for each individual pod.
+
+- The `selector` is going to `matchLabels` that are assigned to each individual pod in our template. So, the deployment knows what pods are part of the deployment. According to the template, each pod is going to be deployed with the label that's a key-value pair of `app:auth`. Our deployment is going to select the pods using the same labels `app:auth`.
+
+- `replicas` is the number of desired pods to be deployed.
+
+- `strategy` is the deployment strategy to use to replace existing pods with new ones.
+    - "Recreate" - Kill all existing pods before creating new ones.
+    - "RollingUpdate" - Replace the old ReplicaSets by new one gradually scaling down the old ReplicaSets and scale up the new one.
+- `maxSurge` is the maximum number of pods that can be scheduled above the desired number of pods. So, if our desired number of pods is 2 and we need to do an update, it might be necessary to exceed the number of replicas while some pods are shutting down and newer pods are spinning up. So, it's effectively to give us some extra headroom.
+
+- `template` describes the pods that will be created. Here `spec` has a different format. This is where we define the name of our container and the source to pull the image from our Docker Repository. `ports` is similar to the `EXPOSE` instruction in our Dockerfile. The `ports` is primarily informational though here.
+
+- `envFrom` is a list of sources to populate environment variables in the container. So, our `configmap.yaml` is where we defined our environment variables for our container which we also saw in the shell from inside the container.
+
+- `secretRef` - secrets are stored as environment variables as well. Our secrets come from `secret.yaml` file.
+
+- Both `secret.yaml` and `configmap.yaml` are separate k8s objects in itself.
+
+
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
