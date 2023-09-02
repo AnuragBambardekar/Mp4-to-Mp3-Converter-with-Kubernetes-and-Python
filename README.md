@@ -303,6 +303,41 @@ spec:
 
 - Both `secret.yaml` and `configmap.yaml` are separate k8s objects in itself.
 
+---
+
+6. Gateway Service Code - In `src` folder create another service folder: `gateway`
+
+- Create a venv inside this folder and activate the virtual environment.
+```cmd
+python -m venv venv
+.\venv\Scripts\activate
+```
+
+- Create `server.py`
+
+- Inside the venv, install:
+```cmd
+jedi
+pylint
+pika
+flask
+pyMongo - to wrap our Flask server to interface with MongoDB
+Flask-PyMongo
+```
+
+## What is GridFS in relation to MongoDB?
+
+- We are using MongoDB to store MP3 and Video files. MongoDB has limits and thresholds though. The maximum BSON document size is 16 MB, over which there is performance degradation. What they provide as an alternative is GridFS API to work with files larger than 16 MB by sharding the files.
+
+- Instead of storing a file in a single document, GridFS divides the file into parts or chunks and stores each chunk as a separate document. 
+
+- By default, GridFS uses a default chunk size of 255kB, i.e., GridFS divides a file into chunks of 255 kB with the exception of the last chunk. The last chunk is only as large as necessary.
+
+- GridFS uses two collections to store files. One collection stores the file chunks and the other stores file metadata.
+
+- When you query GridFS for a file, the driver will reassemble the chunks as needed.
+
+- It is not only useful for storing files that exceed 16MB but also for storing any files for which you want access without having to load the entire file into memory.
 
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
