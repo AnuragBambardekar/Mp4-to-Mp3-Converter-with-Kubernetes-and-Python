@@ -208,20 +208,20 @@ You should be able to see the configurations.
 
 - So, there is no need to manually deploy individual pods when the pod crashes.
 
-![Alt text](image.png)
+![Alt text](images/image-7.png)
 
 - k8s also makes manually scaling pods more streamlined. For example, if we have a service that load balances requests to individual pods using round-robin and that service is experiencing more traffic than the available number of pods can handle. As a result of this, we can decide to scale our service up from 2 to 5 pods.
 
 - Without k8s, in a situation like this we would likely need to manually deploy each individual additional pod and then we would need to reconfigure the load balancer to include the new pods in the round-robin order.
 
-![Alt text](image-1.png)
+![Alt text](images/image-8.png)
 
 - k8s does all this for you! It is as simple as running this command:
 ```cmd
 kubectl scale deployment --replicas=6 service
 ```
 
-![Alt text](image-3.png)
+![Alt text](images/image-9.png)
 
 - k8s will scale up your service which includes maintaining the newly scaled number of pods, if the pod happens to crash. And, it will auto-configure the load balancer to include the new pods.
 
@@ -236,7 +236,7 @@ kubectl scale deployment --replicas=6 service
 
 - In our case, we are running our cluster locally using `minkube` so the end-point for the k8s API is on our local machine. But, in the real world your cluster will usually be dpeloyed on some server and on your local machine you'll have some k8s configuration for the cluster on that server which will enable your local `kubectl` CLI to interface with the remote server.
 
-![Alt text](image-4.png)
+![Alt text](images/image-10.png)
 
 **Required Fields in the .yaml files:**
 
@@ -338,6 +338,24 @@ Flask-PyMongo
 - When you query GridFS for a file, the driver will reassemble the chunks as needed.
 
 - It is not only useful for storing files that exceed 16MB but also for storing any files for which you want access without having to load the entire file into memory.
+
+## Updated Architecture Overview
+
+**How RabbitMQ integrates with our overall architecture ?**
+- When a user uploads a video to be converted to MP3, that request will first hit our Gateway. That gateway will store the video in MongoDB and then put a message on the Queue (which is our RabbitMQ), letting downstream services know that there is a video to be processed in MongoDB.
+
+- The Video To MP3 converter service will consume the messages from the queue. It will then get the ID of the video from the message, pull that video from MongoDB, convert the Video to MP3 then store the MP3 on MongoDB, then put a new message on the queue to be consumed by the Notification service that the conversion job is done.
+
+- The Notification service consumes those messages from the queue and sends an email notification to the client, informing the client that the MP3 for the video they uploaded is ready for download.
+
+- The Client will then use an unique ID acquired from the notification + their JWT to make a request to the API gateway to download the MP3. And, the API Gateway will pull the MP3 from MongoDB and serve it to the client.
+
+![Architecture Overview](images/image-11.png)
+
+## Some Key Terms concerning Microservice Architecture
+
+1. Synchronous Interservice Communication
+
 
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
