@@ -438,5 +438,51 @@ docker pull anuragb98/gateway:latest
 
 ## What is an Ingress in context of k8s cluster?
 
+But first, let's understand what is a Service in context of k8s.
+- Think of a service as a group of pods.
+
+![Alt text](image.png)
+
+So, we want to create a `Gateway Service` and we want that service to scale up to multiple instances/pods.
+
+The service comes in and groups all of the instances of our `Gateway Service` together and it does this by using a `Selector`. In our case we are using the `Label Selector` to tell our Service what pods are part of it's group.
+
+The `Label Selector` essentially binds our pods to the service. Any pod with a label will be recognised by the Services being part of its group. Now, we don't need to worry about the individual IP for the individual pods, and we don't need to worry about keeping track of the IP's of pods that go down or are recreated. We also don't have to think about how requests to our Service are load-balanced to individual pods. The Service abstracts all this away from us. Now, we just send requests to the service's cluster ID (1.1.1.1) a.k.a. internal IP, and we assume that these requests will be distributed logically amongst out pods (based on something like round-robin).
+
+**What's an Ingress?**
+
+We have our service with it's pods and that service sits in our cluster, which is our private network. But, we need to allow requests from outside of our cluster to hit our `Gateway Service's` end-points. We do this by making use of an `ingress`.
+
+Simply put, an ingress consists of a load balancer which is an entry point into our cluster and a set of rules. These rules basically say which requests go where.
+
+![Alt text](image-1.png)
+
+Since, the ingress controller (load balancer) is the entry-point into the cluster, it can actually route traffic to the Cluster IP's within the cluster.
+
+In this case, it would route requests going to the configured "mp3converter.com" domain to our `Gateway Service's` internal Cluster IP. And, if we wanted to we could add rules to our `ingress.yaml` that says to route requests to "apples.com" to a different service in our cluster.
+
+- Edit the `ingress.yaml` file.
+- Go to  `(../../../../../Windows/System32/drivers/etc)` and Edit the `hosts` file. 
+  - You'll find this line: `127.0.0.1 kubernetes.docker.internal`
+  - Change it to: `127.0.0.1 mp3converter.com`
+
+- Configure a minikube add-on to allow ingress.
+```cmd
+minikube addons list
+```
+You'll find `ingress` as disabled. Enable it! (The ingress, and ingress-dns addons are currently only supported on Linux)
+```cmd
+minikube addons enable ingress
+```
+- Then run"
+```cmd
+minikube tunnel
+```
+While this is running, whenever we send requests to our loopback address, they're going to go to our minikibe cluster via the ingress and since we mapped `mp3converter.com` to our loopback adress, if we send requests to `mp3converter.com` they're going to go through this minikube tunnel. Whenever we cancel this process (Ctrl + C), then we are no longer tunneling the ingress.
+
+- And, that is how we are going to route requests into our cluster and directly to our API gateway.
+
+*WELP*- I am using a Windows System. Will have to search for a `Linux` system.
+
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
