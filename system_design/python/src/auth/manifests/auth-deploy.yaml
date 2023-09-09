@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: auth
-          image: anuragb98/auth:latest
+          image: anuragb98/auth_ubuntu:latest
           ports:
             - containerPort: 5000
           envFrom:

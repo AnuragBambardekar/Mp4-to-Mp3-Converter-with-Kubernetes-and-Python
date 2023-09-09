@@ -8,7 +8,7 @@ from storage import util
 # use RabbitMQ to store messages
 
 server = Flask(__name__)
-server.config["MONGO_URI"] = "mongodb://host.minikube.internal:271017//videos"
+server.config["MONGO_URI"] = "mongodb://host.minikube.internal:271017//videos" # endpoint to interface with MongoDB
 
 mongo = PyMongo(server)
 

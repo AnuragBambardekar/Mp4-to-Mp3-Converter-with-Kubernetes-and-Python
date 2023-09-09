@@ -2,7 +2,7 @@ FROM python:3.10-slim-bullseye
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
-    python3-dev default-libmysqlclient-dev build-essential pkg-config \
+    build-essential default-libmysqlclient-dev pkg-config \
     && pip install --no-cache-dir --upgrade pip
 
 WORKDIR /app

@@ -1,5 +1,5 @@
 import jwt, datetime, os
-from flask import Flask, request
+from flask import Flask, request # squiggly lines will show because installations are local(venv)
 from flask_mysqldb import MySQL
 
 server = Flask(__name__)
@@ -75,3 +75,15 @@ def createJWT(username, secret, authz):
 if __name__ == "__main__":
     # print(__name__)
     server.run(host="0.0.0.0",port=5000,) # this tells your OS to listen on all public IP's
+
+    """
+    The host is the server that is hosting our application.
+    In our case, the server that is hosting our flask application is the docker container
+    that it is running in. So, we need to tell our flask app to listen on our Dcoker
+    container's IP address. But, the docker container's IP address is subject to change.
+    So, instead of setting it to the static IP address of our Dcoker container, we set
+    it to 0.0.0.0 (Wild Card). if we don;t configure this, it will listen to the localhost
+    and it is only accessible from within the host, therefore outside requests sent to our
+    Docker container would never actually be sent to our Flask app, because the loopback
+    address isn't publicly accessible.
+    """
