@@ -484,5 +484,28 @@ While this is running, whenever we send requests to our loopback address, they'r
 
 *WELP*- I am using a Windows System. Will have to search for a `Linux` system.
 
+**Got Access to Linux Machine**
+Now that I have a Linux system. I did the following:
+- Installed `docker` engine (Follow all the steps here: https://docs.docker.com/desktop/install/linux-install/)
+- Installed `kubectl` (Follow all the steps here: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
+- Installed `minikube` (Follow all the steps here: https://minikube.sigs.k8s.io/docs/start/)
+- Installed `k9s` (Follow all the steps here: https://github.com/derailed/k9s) [curl -sS https://webinstall.dev/k9s | bash]
+
+If at some point you get the following error:
+```cmd
+Reading package lists... Error!
+E: LZ4F: /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy_multiverse_binary-amd64_Packages.lz4 Unexpected end of file
+E: LZ4F: /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy_multiverse_binary-amd64_Packages.lz4 Read error (18446744073709551615: ERROR_GENERIC)
+E: The package lists or status file could not be parsed or opened.
+```
+
+Then, the fix is:
+```cmd
+sudo rm /var/lib/apt/lists/* -vf
+sudo apt-get clean
+sudo apt-get update
+```
+
+
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
