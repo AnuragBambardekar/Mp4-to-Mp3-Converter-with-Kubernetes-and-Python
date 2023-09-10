@@ -588,7 +588,7 @@ Then add the following line:
 minikube addons enable ingress
 ```
 
-
+**Back to the original problem, Will pick it up later**
 
 
 
