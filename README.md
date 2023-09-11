@@ -484,115 +484,90 @@ While this is running, whenever we send requests to our loopback address, they'r
 
 *WELP*- I am using a Windows System. Will have to search for a `Linux` system.
 
-**Got Access to Linux Machine**
-Now that I have a Linux system. I did the following:
-- Installed `docker` engine (Follow all the steps here: https://docs.docker.com/desktop/install/linux-install/)
-- Installed `kubectl` (Follow all the steps here: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
-- Installed `minikube` (Follow all the steps here: https://minikube.sigs.k8s.io/docs/start/)
-- Installed `k9s` (Follow all the steps here: https://github.com/derailed/k9s) [curl -sS https://webinstall.dev/k9s | bash]
+`Go to Linux_README.md` file to read up about my adventures in Linux land.
 
-If at some point you get the following error:
-```cmd
-Reading package lists... Error!
-E: LZ4F: /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy_multiverse_binary-amd64_Packages.lz4 Unexpected end of file
-E: LZ4F: /var/lib/apt/lists/archive.ubuntu.com_ubuntu_dists_jammy_multiverse_binary-amd64_Packages.lz4 Read error (18446744073709551615: ERROR_GENERIC)
-E: The package lists or status file could not be parsed or opened.
-```
+**Back to the original problem, Will pick it up later**
 
-Then, the fix is:
-```cmd
-sudo rm /var/lib/apt/lists/* -vf
-sudo apt-get clean
-sudo apt-get update
-```
+To Do: <br>
+✅ Learn about ingress [Check this folder: `learning_ingress`]
 
-Also do:
-```cmd
-sudo apt install python3.10-venv
-```
+**Now I possess a little knowledge about ingress and having enabled ingress on my Windows PC, Let's do this!!**
 
-To fix flask_mysqldb installation errors:
-```cmd
-sudo apt install pkg-config
-pip install mysqlclient
-pip install flask_mysqldb
-```
-
-Set Environment variable for MySQL:
-```cmd
-export MYSQL_HOST=localhost
-```
-
-Create DB from `init.sql` file:
-```cmd
-sudo mysql -uroot < init.sql
-sudo mysql -uroot
-```
-
-```cmd
-mysql> show databases;
-mysql> use auth;
-mysql> show tables;
-mysql> describe user;
-mysql> select * from user;
-```
-
-`To drop the Table & Database, Run:`
-```cmd
-mysql -uroot -e "DROP USER auth_user@localhost"
-```
-
-- create the auth directory scripts and then Dockerfile and then run:
-Build docker file (not from venv):
-```cmd
-sudo docker build .
-```
-
-```cmd
-sudo docker tag cdcb0f0188c8779ea38d2c58f3562c635f401fd48bf58 anuragb98/auth_ubuntu:latest
-sudo docker image ls
-```
-
-```cmd
-sudo docker login # Enter login creds
-sudo docker push anuragb98/auth_ubuntu:latest
-```
-
-```cmd
-native@node1-1:~/Desktop/system_design/Kubernetes-with-Python/system_design/python/src/auth$ minikube start
-```
-
-From within the auth/manifests directory run:
+- Go to `gateway/manifests` directory and run:
 ```cmd
 kubectl apply -f ./
 ```
 
-- made the gateway service folder, wrote the scripts then create Dockerfile as earlier and run (not from venv):
+We don't have the RabbitMQ queue yet, so let's scale down the deployment by running:
 ```cmd
-/system_design/python/src/gateway$ sudo docker build .
-/system_design/python/src/gateway$ sudo docker tag c9bd9267065fbcc004c16da8ee84a20208298ccb15038bfe5fd09d993ccca4dc anuragb98/gateway_ubuntu:latest
-/system_design/Kubernetes-with-Python/system_design/python/src/gateway$ sudo docker push anuragb98/gateway_ubuntu:latest
+kubectl scale deployment --replicas=0 gateway
 ```
 
-Now back to where we got stuck while implementing this on a Windows system.
+---
+9. Create the `rabbit` directory
 
-- After editing the `ingress.yaml` file, Do the following:
+- Instead of making a deployment, we will make a stateful set, because we want our queue to remain intact even if the pod crashes or restarts. We want the messages in the queue to be persistent until they've been pulled from the queue.
+
+## What is a StatefulSet
+- It is similar to a deployment in that it manages the deploymnet and scaling of a set of pods, and these pods are based on an identical container spec.
+- But unlike deployment, with a stateful set, each pod has a persistent identifier that maintains across any re-scheduling.
+
+![Alt text](images/image-17.png)
+
+- This means that if a pod fails, the persistent pod identifiers make it easier to match existing volumes to the new pods that replace any that have failed.
+- This is important because if we were to have multiple instances of a MySQL server. Each individual instance will reference its own physical storage.
+
+![Alt text](images/image-18.png)
+
+- And, actually there would be a `Master pod` that is actually able to persist data to it's physical storage and the rest of the pods would be `Slaves` and they'll be able to only read the data from their physical storage. The physical storage that the slave pods use, continuosly synchronizes with Master pods' physical storage, because that's where all the data persistence happens.
+
+**What we basically want to do:**
+
+- Mount the physical storage on our local to the container instance.
+- If the container instance were to die, for whatever reason, the storage volume that was mounted would remain intact.
+- Then when a new pod is re-deployed, it will once again will have the same mounted physical storage.
+![Alt text](images/image-19.png)
+
+This is the `statefulset.yaml` file that we will make:
+![Alt text](images/image-20.png)
+
+Pay attention to the `volumeMounts` line. The `mountPath` is configuring where in our container we want the storage volume to be mounted to. The `mountPath` is where RabbitMQ is going to store the queues when we create a durable queue and the messages when we configure it to be persistent.
+
+The `volumes` is the configuration of the physical volume mounted to the container. We need to create an additional resource called `persistentVolumeClaim` and this configuration links the `StatefulSet` to the `persistentVolumeClaim` that we are going to create called `rabbitmq-pvc`.
+
+The `persistentVolumeClaim` is going to be bound to the persistent Volume. Within the configuration of the `persistentVolumeClaim` we set how much storage we want to make available to it, from the persistent volume.
+
+The persistent volume would be the one which actually interacts with the actual physical storage.
+
+![Alt text](images/image-21.png)
+
+- Now go to `rabbit/manifests` and create `statefulset.yaml` file.
+
+- Now create the persistentVolumeClaim in the `pvc.yaml` file.
+
+- Create ingress for port 15672 in `ingress.yaml` file.
+
+- Also create `configmap.yaml`, `service.yaml` and `secret.yaml`
+
+- Then from inside `rabbit/manifests` Run:
 ```cmd
-sudo vim /etc/hosts
+kubectl apply -f ./
+```
+```cmd
+kubectl describe pvc
+```
+To delete resources created with the manifests, run:
+```cmd
+kubectl delete f ./
 ```
 
-Then add the following line:
-`127.0.0.1 mp3converter.com`
+*Now, we have our RabbitMQ instance running within our k8s cluster.*
 
+Now, run from another terminal:
 ```cmd
-minikube addons enable ingress
+minikube tunnel
 ```
-
-**Back to the original problem, Will pick it up later**
-
-To Do:
-- Learn about ingress
-
+and go to `rabbitmq-manager.com`
 
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
