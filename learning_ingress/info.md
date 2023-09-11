@@ -92,6 +92,11 @@ kubectl get endpoints
 kubectl get pods -n ingress-nginx
 ```
 
+- Lastly run from a new terminal
+```
+minikube tunnel
+```
+
 Go to `hello-world.info/v1`
 ![Alt text](image-1.png)
 
