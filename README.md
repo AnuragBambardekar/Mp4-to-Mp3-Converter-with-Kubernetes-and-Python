@@ -441,7 +441,7 @@ docker pull anuragb98/gateway:latest
 But first, let's understand what is a Service in context of k8s.
 - Think of a service as a group of pods.
 
-![Alt text](image.png)
+![Alt text](images/image-15.png)
 
 So, we want to create a `Gateway Service` and we want that service to scale up to multiple instances/pods.
 
@@ -455,7 +455,7 @@ We have our service with it's pods and that service sits in our cluster, which i
 
 Simply put, an ingress consists of a load balancer which is an entry point into our cluster and a set of rules. These rules basically say which requests go where.
 
-![Alt text](image-1.png)
+![Alt text](images/image-16.png)
 
 Since, the ingress controller (load balancer) is the entry-point into the cluster, it can actually route traffic to the Cluster IP's within the cluster.
 
