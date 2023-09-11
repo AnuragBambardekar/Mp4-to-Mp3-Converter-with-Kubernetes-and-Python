@@ -97,3 +97,6 @@ Go to `hello-world.info/v1`
 
 Go to `hello-world.info/v2`
 ![Alt text](image-2.png)
+
+# Reference
+- https://www.youtube.com/watch?v=hGG8cq70XQ0 - Ingress kubernetes tutorial in Hindi with Practical Demo
