@@ -37,11 +37,12 @@ NodePort services are not recommended for production use cases where you require
 Lets define:
 
 hello-world.info/v1 -> app1 -> app1 pod - print "hello world 1"
+
 hello-world.info/v2 -> app2 -> app2 pod - print "hello world 2"
 
 - `hashicorp/http-echo` -  is an in-memory web server that renders an HTML page containing the contents of the arguments provided to it. This is especially useful for demos or a more extensive "hello world" Docker application.
 
-OR
+    OR
 
 - Use: `jxlwqq/http-echo`
 
@@ -72,7 +73,7 @@ kubectl delete pod app1
 ```cmd
 kubectl apply -f service.yaml
 ```
-Services are accessible only within cluster.
+Services (IP's) are accessible only within cluster.
 ```cmd
 kubectl get svc
 ```
