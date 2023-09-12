@@ -138,7 +138,7 @@ JWT Auth Mechanism:
 
 A docker container can be part of 2 Docker networks where it will have two different IP addresses. So, in order for the Flask application to work in both Docker networks, we need to configure the application to listen to 0.0.0.0 .
 
-- Freeze the requirements
+- Freeze the requirements [**Always freeze from within the venv**]
 ```cmd
 pip freeze > requirements.txt
 ```
@@ -568,6 +568,34 @@ Now, run from another terminal:
 minikube tunnel
 ```
 and go to `rabbitmq-manager.com`
+
+- Now setup a Queue on the RabbitMQ Console. We've already specified the `routing_key="video"` in the `util.py` file in the `gateway/storage` directory.
+
+```
+Type: Classic
+Name: video
+Durability: Durable
+```
+- Now try to start the gateway server by running the following command in the  `gateway/manifests` directory.
+```cmd
+kubectl apply -f ./
+```
+
+![k9s state at this stage of the project](images/image-22.png)
+So, at this point, we have our Gateway Service, Auth Service and our RabbitMQ Queue Service, up and running in our k8s Cluster. So, right now we can upload files, messages for those uploads will be added to the queue. We don't have a consumer service yet [Converter Service].
+
+---
+10. Create the `converter` directory
+
+- This Service will convert the Videos to MP3's a.k.a. the consumer service.
+
+
+
+
+## Remember
+- Start Docker Desktop
+- minikube start
+- minikube tunnel (different terminal)
 
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
