@@ -8,11 +8,13 @@ from storage import util
 # use RabbitMQ to store messages
 
 server = Flask(__name__)
-server.config["MONGO_URI"] = "mongodb://host.minikube.internal:271017//videos" # endpoint to interface with MongoDB
+# server.config["MONGO_URI"] = "mongodb://host.minikube.internal:27017/videos" # endpoint to interface with MongoDB
 
-mongo = PyMongo(server)
+mongo_video = PyMongo(server, uri="mongodb://host.minikube.internal:27017/videos")
 
-fs = gridfs.GridFS(mongo.db)
+# mongo = PyMongo(server)
+
+fs = gridfs.GridFS(mongo_video.db)
 
 connection = pika.BlockingConnection(pika.ConnectionParameters("rabbitmq"))
 channel = connection.channel()
