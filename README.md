@@ -585,17 +585,59 @@ kubectl apply -f ./
 So, at this point, we have our Gateway Service, Auth Service and our RabbitMQ Queue Service, up and running in our k8s Cluster. So, right now we can upload files, messages for those uploads will be added to the queue. We don't have a consumer service yet [Converter Service].
 
 ---
-10. Create the `converter` directory
+10. Create the `converter` directory. [Converter Service Deployment]
 
 - This Service will convert the Videos to MP3's a.k.a. the consumer service.
+- Create virtual environment and activate it.
+```cmd
+python -m venv venv
+.\venv\Scripts\activate
+```
+- Install dependencies in venv
+```cmd
+pip install pika pymongo moviepy jedi pylint
+```
+- Create the `consumer.py` file. Also create the `convert` folder which contains the conversion code.
+- Freeze the requirements
+```cmd
+\src\gateway> pip freeze > requirements.txt
+```
+- Create a `Dockerfile`
+- Run `docker build .` [Outside venv preferably, works inside venv also though]
+```cmd
+docker tag <image-id> anuragb98/converter:latest
+docker push anuragb98/converter:latest
+```
+- Create the `manifests` directory, and inside it create `converter-deploy.yaml`, `secret.yaml` and `configmap.yaml`.
+- Create the `mp3` Queue on RabbitMQ Console.
+- From `converter/manifests`, run:
+```cmd
+kubectl apply -f ./
+```
+- Run `k9s` to check logs.
+  OR
+- Run:
+```cmd
+kubectl logs -f <pod-name>
+```
+
+![Alt text](images/image-23.png)
+
+---
+11. Next is to check the end-to-end functionality
 
 
 
-
-## Remember
+## Remember/Best Practices
 - Start Docker Desktop
 - minikube start
 - minikube tunnel (different terminal)
+- To re-build a docker file
+Just: <br>
+```docker build .``` <br>
+Then tag it and push it with `:latest`
+- CTRL+C on the terminal where minikube tunnel is running.
+- minikube stop
 
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
