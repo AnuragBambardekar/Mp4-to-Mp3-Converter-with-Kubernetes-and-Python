@@ -21,8 +21,6 @@ spec:
       containers:
         - name: gateway
           image: anuragb98/gateway
-          ports:
-            - containerPort: 8080
           envFrom:
             - configMapRef:
                 name: gateway-configmap
