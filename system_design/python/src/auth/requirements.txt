@@ -1,6 +1,8 @@
 astroid==2.15.6
 blinker==1.6.2
+cffi==1.15.1
 click==8.1.7
+cryptography==41.0.3
 dill==0.3.7
 Flask==2.3.3
 Flask-MySQLdb==1.0.1
@@ -14,10 +16,9 @@ mccabe==0.7.0
 mysqlclient==2.2.0
 parso==0.8.3
 platformdirs==3.10.0
+pycparser==2.21
 PyJWT==2.8.0
 pylint==2.17.5
-tomli==2.0.1
 tomlkit==0.12.1
-typing_extensions==4.7.1
 Werkzeug==2.3.7
 wrapt==1.15.0
