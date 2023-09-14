@@ -706,10 +706,10 @@ Description: <TopologyDescription id: 650348f8ef3c066490928349, topology_type: U
 Note down the JWT returned.
 ![Login](images/image-26.png)
 
-Put the JWT under Authentication/Bearer Token in Postman.
+Put the file to be converted under Body/form-data in Postman.
 ![Upload](images/image-24.png)
 
-Put the file to be converted under Body/form-data in Postman.
+Put the JWT under Authentication/Bearer Token in Postman.
 ![Upload](images/image-25.png)
 
 **If we delete the rabbitmq pod, then we need to also reset the gateway pod because the earlier pod will be referencing the earlier rabbitmq config.**
