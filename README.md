@@ -625,8 +625,183 @@ kubectl logs -f <pod-name>
 
 ---
 11. Next is to check the end-to-end functionality
+- We want to test by uploading a video file.
+- And when we upload that video file, we want to see that the message gets added to the video queue and then gets removed from our video queue and another message gets added to the MP3 queue. We dont want the messages in the MP3 queue to be consumed, so all the messages should be piling up in the MP3 queue. Also, if it's working as expected we should be able to download a converted video file (MP3 file) from MongoDB.
+
+- We will use Postman.
+
+- Find a video to convert and place it in converter directory.
+
+- Check your mysql DB.
+```cmd
+mysql> use auth;
+Database changed
+mysql> show tables;
++----------------+
+| Tables_in_auth |
++----------------+
+| user           |
++----------------+
+1 row in set (0.04 sec)
+
+mysql> select * from user;
++----+------------------+-----------+
+| id | email            | password  |
++----+------------------+-----------+
+|  1 | anurag@gmail.com | anurag123 |
++----+------------------+-----------+
+1 row in set (0.06 sec)
+
+mysql>exit
+Bye
+```
+
+- Use `curl` commands or use Postman to see if you can access the website.
+
+```cmd
+PS C:\Users\anura> $CurlArgument = '-X','POST','http://mp3converter.com/login','-u','anurag@gmail.com:anurag123'
+PS C:\Users\anura> $CURLEXE = 'C:\Program Files\Git\mingw64\bin\curl.exe'
+PS C:\Users\anura> & $CURLEXE @CurlArgument
+```
+
+Now, go to the `src/converter` directory and run:
+
+```cmd
+PS C:\Users\anura> $CurlArgument = '-X','POST','-F','file=@./test_video_1.mp4','-H','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFudXJhZ0BnbWFpbC5jb20iLCJleHAiOjE2OTQ3Mzg2MTMsImlhdCI6MTY5NDY1MjIxMywiYWRtaW4iOnRydWV9.LXJxHvrDJc_aHmAJfGsOcMsr-Pj022KLuEMOzrsvaTM','http://mp3converter.com/upload'
+PS C:\Users\anura> $CURLEXE = 'C:\Program Files\Git\mingw64\bin\curl.exe'
+PS C:\Users\anura> & $CURLEXE @CurlArgument
+```
+
+**This don't work in Windows, so use Postman!**
+
+**nginx Entity too large error:**
+```
+<html>
+
+<head>
+	<title>413 Request Entity Too Large</title>
+</head>
+
+<body>
+	<center>
+		<h1>413 Request Entity Too Large</h1>
+	</center>
+	<hr>
+	<center>nginx</center>
+</body>
+```
+**Solution:----> nginx supports 1MB upload limit? - Yes**
 
 
+**New Error! -> on hitting `http://mp3converter.com/upload`**
+```
+Internal Server Error!: host.minikube.internal:27017: [Errno 111] Connection refused, Timeout: 30s, Topology
+Description: <TopologyDescription id: 650348f8ef3c066490928349, topology_type: Unknown, servers: [<ServerDescription
+	('host.minikube.internal', 27017) server_type: Unknown, rtt: None,
+	error=AutoReconnect('host.minikube.internal:27017: [Errno 111] Connection refused')>]>
+```
+
+**Solution:----> INSTALL FRIGGGINN MONGODB + mongosh + mongoDB command line DB tools!!! [Also add the bin locations to the env path.]**
+
+Note down the JWT returned.
+![Login](images/image-26.png)
+
+Put the JWT under Authentication/Bearer Token in Postman.
+![Upload](images/image-24.png)
+
+Put the file to be converted under Body/form-data in Postman.
+![Upload](images/image-25.png)
+
+**If we delete the rabbitmq pod, then we need to also reset the gateway pod because the earlier pod will be referencing the earlier rabbitmq config.**
+
+*Explanation:*
+
+- In `gateway/server.py` we are connectin to our RabbitMQ queue using the service name `rabbitmq`. So, in k8s the service name resolves to the host. The ClusterIP address that the `rabbitmq` service resolves to, changes when we restart the `rabbitmq` pod but the `gateway` pod still references the old IP address using the same service name. So, when we restart the `gateway` pod, its reference for the `rabbitmq` service gets updated.
+
+- So, just delete the `gateway` pod from `k9s` console and it will create a new replica of the `gateway` pod simultaneously.
+
+- **Now check mongodb database to see the uploaded video and converted audio: [Use mongosh or Mongo GUI]**
+```cmd
+C:\Users\anura>mongosh
+Current Mongosh Log ID: 6503621b09daf755c4c6674a
+Connecting to:          mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.10.6
+Using MongoDB:          7.0.1
+Using Mongosh:          1.10.6
+
+For mongosh info see: https://docs.mongodb.com/mongodb-shell/
+
+
+To help improve our products, anonymous usage data is collected and sent to MongoDB periodically (https://www.mongodb.com/legal/privacy-policy).
+You can opt-out by running the disableTelemetry() command.
+
+------
+   The server generated these startup warnings when booting
+   2023-09-14T14:29:38.035-04:00: Access control is not enabled for the database. Read and write access to data and configuration is unrestricted
+------
+
+test> show databases;
+admin    40.00 KiB
+config  108.00 KiB
+local    40.00 KiB
+mp3s      3.04 MiB
+videos    6.02 MiB
+test> use mp3s
+switched to db mp3s
+mp3s> show collections
+fs.chunks
+fs.files
+mp3s> db.fs.files.find()
+[
+  {
+    _id: ObjectId("6503537575556396d7b7589d"),
+    chunkSize: 261120,
+    length: Long("271090"),
+    uploadDate: ISODate("2023-09-14T18:39:49.288Z")
+  },
+  {
+    _id: ObjectId("650353870315b39d9ec827e6"),
+    chunkSize: 261120,
+    length: Long("271090"),
+    uploadDate: ISODate("2023-09-14T18:40:07.669Z")
+  },
+  {
+    _id: ObjectId("65035388af5b753549f5cfa1"),
+    chunkSize: 261120,
+    length: Long("271090"),
+    uploadDate: ISODate("2023-09-14T18:40:08.698Z")
+  },
+  {
+    _id: ObjectId("65035828448c2337e0041428"),
+    chunkSize: 261120,
+    length: Long("271090"),
+    uploadDate: ISODate("2023-09-14T18:59:52.041Z")
+  },
+  {
+    _id: ObjectId("6503585fbda1f088a652025d"),
+    chunkSize: 261120,
+    length: Long("271090"),
+    uploadDate: ISODate("2023-09-14T19:00:47.144Z")
+  },
+  {
+    _id: ObjectId("65035f4c9a287c314134b847"),
+    chunkSize: 261120,
+    length: Long("271090"),
+    uploadDate: ISODate("2023-09-14T19:30:20.919Z")
+  }
+]
+mp3s> exit
+```
+
+![Alt text](images/image-27.png)
+
+**Download the converted video file.**
+```cmd
+PS C:\Users\anura> mongofiles -d=mp3s get_id '{\"$oid\": \"65037eea448c2337e004142b\"}' --local=test.mp3
+2023-09-14T17:52:15.061-0400    connected to: mongodb://localhost/
+2023-09-14T17:52:15.069-0400    finished writing to test.mp3
+```
+
+Voila!! Finally, we have the converted mp3 file from mp4.
 
 ## Remember/Best Practices
 - Start Docker Desktop
@@ -635,7 +810,8 @@ kubectl logs -f <pod-name>
 - To re-build a docker file
 Just: <br>
 ```docker build .``` <br>
-Then tag it and push it with `:latest`
+Then `docker tag <image-id> anuragb98/gateway:latest` it and then `docker push anuragb98/gateway:latest` <br>
+Then delete the resources created using the manifests using `kubectl delete -f ./manifests` and then again `kubectl apply -f ./manifests` <br>
 - CTRL+C on the terminal where minikube tunnel is running.
 - minikube stop
 
