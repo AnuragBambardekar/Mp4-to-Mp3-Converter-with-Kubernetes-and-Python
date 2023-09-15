@@ -803,6 +803,75 @@ PS C:\Users\anura> mongofiles -d=mp3s get_id '{\"$oid\": \"65037eea448c2337e0041
 
 Voila!! Finally, we have the converted mp3 file from mp4.
 
+---
+12. Now we make the Update Gateway Service to have a `Download endpoint`
+- Code is similar to upload
+- It is an endpoint for downloading MP3 files. It validates user access based on their token and admin status, checks for the presence of a required "fid" parameter in the request, and handles file retrieval and response generation accordingly.
+
+---
+13. Making the Notification Service
+- similar to our converter service, this is going to be a consumer service.
+- make a new directory called `notification` under src directory.
+- make another file `send/email.py` and setup GMail's SMTP server.
+- we are going to have GMail to allow non-Google applications to be authorized to login to GMail. So, preferably setup a new dummy GMail account.
+
+- Start Python Virtual environment:
+```cmd
+python -m venv venv
+.\venv\Scripts\activate
+```
+- Install libraries:
+```cmd
+pip install pika jedi pylint 
+```
+
+- Make `requirements.txt`
+```cmd
+pip freeze > requirements.txt
+```
+
+- Create a `Dockerfile`
+
+- Create a `manifests` directory.
+
+- Make a Docker image
+```cmd
+docker build .
+docker tag <image-id> anuragb98/notification:latest
+docker push anuragb98/notification:latest
+```
+
+- Configure GMail account to allow non-Google apps to login.
+```
+As of May 30 2022 google has removed the less secure apps option. There is no way to turn this on as it no longer exists.
+
+If you are trying to use Google smtp server you have two options
+
+Enable 2fa on your google account and create an apps password and use that in place of your true password in your code.
+switch to using Xoauth2 most of the libraries support it. it will depend upon the language you are using though.
+```
+
+- Reference to setup 2FA: https://towardsdatascience.com/how-to-easily-automate-emails-with-python-8b476045c151#62c7
+
+- If that don't work/sounds complicated then use: `https://github.com/kootenpv/yagmail`.
+- Go to venv of notifications and `pip install yagmail` then freeze requirements and rebuild docker image.
+
+- Make sure the email in the DB is a real one, so that you actually receive the notification.
+```sql
+UPDATE user SET email = 'anurag.bambardekar@gmail.com' WHERE id = 1;
+```
+
+- So now when you hit the POST request to upload a video for conversion to MP3, momentarily you'll get an email.
+![My Inbox](images/image-28.png)
+
+Add Query param to the URL:
+![Alt text](images/image-29.png)
+
+Add Bearer Token to the URL:
+![Alt text](images/image-30.png)
+
+
+
 ## Remember/Best Practices
 - Start Docker Desktop
 - minikube start
@@ -814,6 +883,7 @@ Then `docker tag <image-id> anuragb98/gateway:latest` it and then `docker push a
 Then delete the resources created using the manifests using `kubectl delete -f ./manifests` and then again `kubectl apply -f ./manifests` <br>
 - CTRL+C on the terminal where minikube tunnel is running.
 - minikube stop
+- Open up Postman for API testing
 
 # References
 - https://www.youtube.com/watch?v=hmkF77F9TLw - Microservice Architecture and System Design with Python & Kubernetes
