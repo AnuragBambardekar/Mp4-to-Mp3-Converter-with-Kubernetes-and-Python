@@ -3,7 +3,8 @@ kind: Ingress
 metadata:
   name: gateway-ingress
   annotations:
-    nginx.ingress.kubernetes.ip/proxy-body-size: "0"
+    nginx.ingress.kubernetes.ip/proxy-body-size: "1024m"
+    nginx.org/client-max-body-size: "1024m"
     nginx.ingress.kubernetes.ip/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.ip/proxy-send-timeout: "600"
 spec:
